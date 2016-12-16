@@ -1,1 +1,1 @@
-module.exports = require('./lib/tty.js');
+module.exports = require('./lib/ttyx.js');

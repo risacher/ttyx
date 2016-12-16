@@ -1,6 +1,6 @@
 /**
- * tty.js
- * Copyright (c) 2012-2013, Christopher Jeffrey (MIT License)
+ * ttyx-client.js, Copyright (C) 2016, Dan Risacher (MIT License)
+ * based on tty.js, Copyright (c) 2012-2013, Christopher Jeffrey (MIT License)
  */
 
 ;(function() {
@@ -10,13 +10,13 @@
  */
 
 var document = this.document
-  , window = this
-  , root
-  , body
-  , h1
-  , open
-  , lights;
-
+    , window = this
+    , root
+    , body
+    , h1
+    , open
+    , lights;
+    
 /**
  * Initial Document Title
  */
@@ -27,166 +27,175 @@ var initialTitle = document.title;
  * Helpers
  */
 
+function cancel(ev) {
+  if (ev.preventDefault) ev.preventDefault();
+  ev.returnValue = false;
+  if (ev.stopPropagation) ev.stopPropagation();
+  ev.cancelBubble = true;
+  return false;
+}
+
 var EventEmitter = Terminal.EventEmitter
   , inherits = Terminal.inherits
   , on = Terminal.on
-  , off = Terminal.off
-  , cancel = Terminal.cancel;
+  , off = Terminal.off;
 
 /**
- * tty
+ * ttyx
  */
 
-var tty = new EventEmitter;
+var ttyx = new EventEmitter;
 
 /**
  * Shared
  */
 
-tty.socket;
-tty.windows;
-tty.terms;
-tty.elements;
+ttyx.socket;
+ttyx.windows;
+ttyx.terms;
+ttyx.elements;
 
 /**
  * Open
  */
 
-tty.open = function() {
-  if (document.location.pathname) {
-    var parts = document.location.pathname.split('/')
-      , base = parts.slice(0, parts.length - 1).join('/') + '/'
-      , resource = base.substring(1) + 'socket.io';
-
-    tty.socket = io.connect(null, { resource: resource });
-  } else {
-    tty.socket = io.connect();
-  }
-
-  tty.windows = [];
-  tty.terms = {};
-
-  tty.elements = {
-    root: document.documentElement,
-    body: document.body,
-    h1: document.getElementsByTagName('h1')[0],
-    open: document.getElementById('open'),
-    lights: document.getElementById('lights')
-  };
-
-  root = tty.elements.root;
-  body = tty.elements.body;
-  h1 = tty.elements.h1;
-  open = tty.elements.open;
-  lights = tty.elements.lights;
-
-  if (open) {
-    on(open, 'click', function() {
-      new Window;
-    });
-  }
-
-  if (lights) {
-    on(lights, 'click', function() {
-      tty.toggleLights();
-    });
-  }
-
-  tty.socket.on('connect', function() {
-    tty.reset();
-    tty.emit('connect');
-  });
-
-  tty.socket.on('data', function(id, data) {
-    if (!tty.terms[id]) return;
-    tty.terms[id].write(data);
-  });
-
-  tty.socket.on('kill', function(id) {
-    if (!tty.terms[id]) return;
-    tty.terms[id]._destroy();
-  });
-
-  // XXX Clean this up.
-  tty.socket.on('sync', function(terms) {
-    console.log('Attempting to sync...');
-    console.log(terms);
-
-    tty.reset();
-
-    var emit = tty.socket.emit;
-    tty.socket.emit = function() {};
-
-    Object.keys(terms).forEach(function(key) {
-      var data = terms[key]
-        , win = new Window
-        , tab = win.tabs[0];
-
-      delete tty.terms[tab.id];
-      tab.pty = data.pty;
-      tab.id = data.id;
-      tty.terms[data.id] = tab;
-      win.resize(data.cols, data.rows);
-      tab.setProcessName(data.process);
-      tty.emit('open tab', tab);
-      tab.emit('open');
-    });
-
-    tty.socket.emit = emit;
-  });
-
-  // We would need to poll the os on the serverside
-  // anyway. there's really no clean way to do this.
-  // This is just easier to do on the
-  // clientside, rather than poll on the
-  // server, and *then* send it to the client.
-  setInterval(function() {
-    var i = tty.windows.length;
-    while (i--) {
-      if (!tty.windows[i].focused) continue;
-      tty.windows[i].focused.pollProcessName();
+ttyx.open = function() {
+    if (document.location.pathname) {
+        var parts = document.location.pathname.split('/')
+        , base = parts.slice(0, parts.length - 1).join('/') + '/'
+        , resource = base + 'socket.io';
+        //FIXME - remove server name 
+        ttyx.socket = io.connect(window.location.origin, { path: resource });
+    } else {
+        ttyx.socket = io.connect();
     }
-  }, 2 * 1000);
-
-  // Keep windows maximized.
-  on(window, 'resize', function() {
-    var i = tty.windows.length
-      , win;
-
-    while (i--) {
-      win = tty.windows[i];
-      if (win.minimize) {
-        win.minimize();
-        win.maximize();
-      }
+    
+    ttyx.windows = [];
+    ttyx.terms = {};
+    
+    ttyx.elements = {
+        root: document.documentElement,
+        body: document.body,
+        h1: document.getElementsByTagName('h1')[0],
+        open: document.getElementById('open'),
+        lights: document.getElementById('lights')
+    };
+    
+    root = ttyx.elements.root;
+    body = ttyx.elements.body;
+    h1 = ttyx.elements.h1;
+    open = ttyx.elements.open;
+    lights = ttyx.elements.lights;
+    
+    if (open) {
+        on(open, 'click', function() {
+            new Window;
+        });
     }
-  });
+    
+    if (lights) {
+        on(lights, 'click', function() {
+            ttyx.toggleLights();
+        });
+    }
 
-  tty.emit('load');
-  tty.emit('open');
+    ttyx.socket.on('connect', function() {
+        console.log('tty connect');
+        ttyx.reset();
+        ttyx.emit('connect');
+    });
+    
+    ttyx.socket.on('data', function(id, data) {
+        //    console.log('tty data for term ', id);
+        if (!ttyx.terms[id]) return;
+        ttyx.terms[id].write(data);
+    });
+    
+    ttyx.socket.on('kill', function(id) {
+        if (!ttyx.terms[id]) return;
+        ttyx.terms[id]._destroy();
+    });
+    
+    // XXX Clean this up.
+    ttyx.socket.on('sync', function(terms) {
+        console.log('Attempting to sync...');
+        console.log(terms);
+        
+        ttyx.reset();
+        
+        var emit = ttyx.socket.emit;
+        ttyx.socket.emit = function() {};
+        
+        Object.keys(terms).forEach(function(key) {
+            var data = terms[key]
+            , win = new Window
+            , tab = win.tabs[0];
+            
+            delete ttyx.terms[tab.id];
+            tab.pty = data.pty;
+            tab.id = data.id;
+            ttyx.terms[data.id] = tab;
+            win.resize(data.cols, data.rows);
+            tab.setProcessName(data.process);
+            ttyx.emit('open tab', tab);
+            tab.emit('open');
+        });
+        
+        ttyx.socket.emit = emit;
+    });
+
+    // We would need to poll the os on the serverside
+    // anyway. there's really no clean way to do this.
+    // This is just easier to do on the
+    // clientside, rather than poll on the
+    // server, and *then* send it to the client.
+    setInterval(function() {
+        var i = ttyx.windows.length;
+        while (i--) {
+            if (!ttyx.windows[i].focused) continue;
+            ttyx.windows[i].focused.pollProcessName();
+        }
+    }, 2 * 1000);
+    
+    // Keep windows maximized.
+    on(window, 'resize', function() {
+        var i = ttyx.windows.length
+        , win;
+        
+        while (i--) {
+            win = ttyx.windows[i];
+            if (win.minimize) {
+                win.minimize();
+                win.maximize();
+            }
+        }
+    });
+    
+    ttyx.emit('load');
+    ttyx.emit('open');
 };
 
 /**
  * Reset
  */
 
-tty.reset = function() {
-  var i = tty.windows.length;
+ttyx.reset = function() {
+  var i = ttyx.windows.length;
   while (i--) {
-    tty.windows[i].destroy();
+    ttyx.windows[i].destroy();
   }
 
-  tty.windows = [];
-  tty.terms = {};
+  ttyx.windows = [];
+  ttyx.terms = {};
 
-  tty.emit('reset');
+  ttyx.emit('reset');
 };
 
 /**
  * Lights
  */
 
-tty.toggleLights = function() {
+ttyx.toggleLights = function() {
   root.className = !root.className
     ? 'dark'
     : '';
@@ -197,63 +206,68 @@ tty.toggleLights = function() {
  */
 
 function Window(socket) {
-  var self = this;
-
-  EventEmitter.call(this);
-
-  var el
+    var self = this;
+    
+    EventEmitter.call(this);
+    
+    var el
+    , tc
     , grip
     , bar
     , button
     , title;
+    
+    el = document.createElement('div');
+    el.className = 'window';
 
-  el = document.createElement('div');
-  el.className = 'window';
+    grip = document.createElement('div');
+    grip.className = 'grip';
+    
+    bar = document.createElement('div');
+    bar.className = 'bar';
+    
+    button = document.createElement('div');
+    button.innerHTML = '~';
+    button.title = 'new/close';
+    button.className = 'tab';
+    
+    title = document.createElement('div');
+    title.className = 'title';
+    title.innerHTML = '';
+    
+    tc = document.createElement('div');
+    tc.className = 'terminal-container';
 
-  grip = document.createElement('div');
-  grip.className = 'grip';
-
-  bar = document.createElement('div');
-  bar.className = 'bar';
-
-  button = document.createElement('div');
-  button.innerHTML = '~';
-  button.title = 'new/close';
-  button.className = 'tab';
-
-  title = document.createElement('div');
-  title.className = 'title';
-  title.innerHTML = '';
-
-  this.socket = socket || tty.socket;
-  this.element = el;
-  this.grip = grip;
-  this.bar = bar;
-  this.button = button;
-  this.title = title;
-
-  this.tabs = [];
-  this.focused = null;
-
-  this.cols = Terminal.geometry[0];
-  this.rows = Terminal.geometry[1];
-
-  el.appendChild(grip);
-  el.appendChild(bar);
-  bar.appendChild(button);
-  bar.appendChild(title);
-  body.appendChild(el);
-
-  tty.windows.push(this);
-
-  this.createTab();
-  this.focus();
-  this.bind();
-
-  this.tabs[0].once('open', function() {
-    tty.emit('open window', self);
-    self.emit('open');
-  });
+    this.socket = socket || ttyx.socket;
+    this.element = el;
+    this.grip = grip;
+    this.bar = bar;
+    this.button = button;
+    this.title = title;
+    this.tc = tc;
+    this.tabs = [];
+    this.focused = null;
+    
+    this.cols = Terminal.geometry[0];
+    this.rows = Terminal.geometry[1];
+    
+    el.appendChild(grip);
+    el.appendChild(bar);
+    el.appendChild(tc);
+    bar.appendChild(button);
+    bar.appendChild(title);
+    body.appendChild(el);
+    
+    ttyx.windows.push(this);
+    
+    this.createTab();
+    self.focus();
+    this.bind();
+    
+    this.tabs[0].once('open', function() {
+        ttyx.emit('open window', self);
+        self.emit('open');
+    });
 }
 
 inherits(Window, EventEmitter);
@@ -264,6 +278,7 @@ Window.prototype.bind = function() {
     , bar = this.bar
     , grip = this.grip
     , button = this.button
+    , tc = this.tc
     , last = 0;
 
   on(button, 'click', function(ev) {
@@ -310,7 +325,7 @@ Window.prototype.focus = function() {
   // Focus Foreground Tab
   this.focused.focus();
 
-  tty.emit('focus window', this);
+  ttyx.emit('focus window', this);
   this.emit('focus');
 };
 
@@ -320,8 +335,8 @@ Window.prototype.destroy = function() {
 
   if (this.minimize) this.minimize();
 
-  splice(tty.windows, this);
-  if (tty.windows.length) tty.windows[0].focus();
+  splice(ttyx.windows, this);
+  if (ttyx.windows.length) ttyx.windows[0].focus();
 
   this.element.parentNode.removeChild(this.element);
 
@@ -329,7 +344,7 @@ Window.prototype.destroy = function() {
     term.destroy();
   });
 
-  tty.emit('close window', this);
+  ttyx.emit('close window', this);
   this.emit('close');
 };
 
@@ -370,7 +385,7 @@ Window.prototype.drag = function(ev) {
       top: el.style.top.replace(/\w+/g, '')
     };
 
-    tty.emit('drag window', self, ev);
+    ttyx.emit('drag window', self, ev);
     self.emit('drag', ev);
   }
 
@@ -412,11 +427,12 @@ Window.prototype.resizing = function(ev) {
     y = el.clientHeight / resize.h;
     x = (x * term.cols) | 0;
     y = (y * term.rows) | 0;
-
-    self.resize(x, y);
-
-    el.style.width = '';
-    el.style.height = '';
+      
+      self.resize(x, y);
+      
+      // leave it for the fit addon
+      //el.style.width = '';
+      //el.style.height = '';
 
     el.style.overflow = '';
     el.style.opacity = '';
@@ -464,7 +480,7 @@ Window.prototype.maximize = function() {
 
     self.resize(m.cols, m.rows);
 
-    tty.emit('minimize window', self);
+    ttyx.emit('minimize window', self);
     self.emit('minimize');
   };
 
@@ -487,19 +503,21 @@ Window.prototype.maximize = function() {
 
   this.resize(x, y);
 
-  tty.emit('maximize window', this);
+  ttyx.emit('maximize window', this);
   this.emit('maximize');
 };
 
 Window.prototype.resize = function(cols, rows) {
   this.cols = cols;
   this.rows = rows;
+  console.log('resize', cols, rows);
 
   this.each(function(term) {
-    term.resize(cols, rows);
+//    term.resize(cols, rows);
+      term.fit();
   });
 
-  tty.emit('resize window', this, cols, rows);
+  ttyx.emit('resize window', this, cols, rows);
   this.emit('resize', cols, rows);
 };
 
@@ -511,7 +529,10 @@ Window.prototype.each = function(func) {
 };
 
 Window.prototype.createTab = function() {
-  return new Tab(this, this.socket);
+    var tab =  new Tab(this, this.socket);
+    tab.fit();
+    tab.focus();
+    return tab;
 };
 
 Window.prototype.highlight = function() {
@@ -554,53 +575,53 @@ Window.prototype.previousTab = function() {
  */
 
 function Tab(win, socket) {
-  var self = this;
-
-  var cols = win.cols
+    var self = this;
+    
+    var cols = win.cols
     , rows = win.rows;
+    
+    Terminal.call(this, {
+        cols: cols,
+        rows: rows
+    });
 
-  Terminal.call(this, {
-    cols: cols,
-    rows: rows
-  });
+    var button = document.createElement('div');
+    button.className = 'tab';
+    button.innerHTML = '\u2022';
+    win.bar.appendChild(button);
+    
+    on(button, 'click', function(ev) {
+        if (ev.ctrlKey || ev.altKey || ev.metaKey || ev.shiftKey) {
+            self.destroy();
+        } else {
+            self.focus();
+        }
+        return cancel(ev);
+    });
 
-  var button = document.createElement('div');
-  button.className = 'tab';
-  button.innerHTML = '\u2022';
-  win.bar.appendChild(button);
-
-  on(button, 'click', function(ev) {
-    if (ev.ctrlKey || ev.altKey || ev.metaKey || ev.shiftKey) {
-      self.destroy();
-    } else {
-      self.focus();
-    }
-    return cancel(ev);
-  });
-
-  this.id = '';
-  this.socket = socket || tty.socket;
-  this.window = win;
-  this.button = button;
-  this.element = null;
-  this.process = '';
-  this.open();
-  this.hookKeys();
-
-  win.tabs.push(this);
-
-  this.socket.emit('create', cols, rows, function(err, data) {
-    if (err) return self._destroy();
-    self.pty = data.pty;
-    self.id = data.id;
-    tty.terms[self.id] = self;
-    self.setProcessName(data.process);
-    tty.emit('open tab', self);
-    self.emit('open');
-  });
+    this.id = '';
+    this.socket = socket || ttyx.socket;
+    this.window = win;
+    this.button = button;
+    this.element = null;
+    this.process = '';
+    this.open();
+    this.hookKeys();
+    
+    win.tabs.push(this);
+    
+    this.socket.emit('create', cols, rows, function(err, data) {
+        if (err) return self._destroy();
+        self.pty = data.pty;
+        self.id = data.id;
+        ttyx.terms[self.id] = self;
+        self.setProcessName(data.process);
+        ttyx.emit('open tab', self);
+        self.emit('open');
+    });
 };
-
-inherits(Tab, Terminal);
+    
+    inherits(Tab, Terminal);
 
 // We could just hook in `tab.on('data', ...)`
 // in the constructor, but this is faster.
@@ -637,36 +658,37 @@ Tab.prototype.write = function(data) {
 Tab.prototype._focus = Tab.prototype.focus;
 
 Tab.prototype.focus = function() {
-  if (Terminal.focus === this) return;
-
-  var win = this.window;
-
-  // maybe move to Tab.prototype.switch
-  if (win.focused !== this) {
-    if (win.focused) {
-      if (win.focused.element.parentNode) {
-        win.focused.element.parentNode.removeChild(win.focused.element);
-      }
-      win.focused.button.style.fontWeight = '';
+//    if (Terminal.focus === this) return;
+    
+    var win = this.window;
+    
+    // focused is the focused Tab within the Window
+    // maybe move to Tab.prototype.switch
+    if (win.focused !== this) {
+        if (win.focused) {
+            if (win.focused.element.parentNode) {
+                win.focused.element.parentNode.removeChild(win.focused.element);
+            }
+            win.focused.button.style.fontWeight = '';
+        }
+        
+        win.tc.appendChild(this.element);
+        win.focused = this;
+        
+        win.title.innerHTML = this.process;
+        document.title = this.title || initialTitle;
+        this.button.style.fontWeight = 'bold';
+        this.button.style.color = '';
     }
 
-    win.element.appendChild(this.element);
-    win.focused = this;
-
-    win.title.innerHTML = this.process;
-    document.title = this.title || initialTitle;
-    this.button.style.fontWeight = 'bold';
-    this.button.style.color = '';
-  }
-
-  this.handleTitle(this.title);
-
-  this._focus();
-
-  win.focus();
-
-  tty.emit('focus tab', this);
-  this.emit('focus');
+    this.handleTitle(this.title);
+    
+    this._focus();
+    
+    //  win.focus();
+    
+    ttyx.emit('focus tab', this);
+    this.emit('focus');
 };
 
 Tab.prototype._resize = Tab.prototype.resize;
@@ -674,7 +696,7 @@ Tab.prototype._resize = Tab.prototype.resize;
 Tab.prototype.resize = function(cols, rows) {
   this.socket.emit('resize', this.id, cols, rows);
   this._resize(cols, rows);
-  tty.emit('resize tab', this, cols, rows);
+  ttyx.emit('resize tab', this, cols, rows);
   this.emit('resize', cols, rows);
 };
 
@@ -691,7 +713,7 @@ Tab.prototype._destroy = function() {
     this.element.parentNode.removeChild(this.element);
   }
 
-  if (tty.terms[this.id]) delete tty.terms[this.id];
+  if (ttyx.terms[this.id]) delete ttyx.terms[this.id];
   splice(win.tabs, this);
 
   if (win.focused === this) {
@@ -702,7 +724,7 @@ Tab.prototype._destroy = function() {
     win.destroy();
   }
 
-  // if (!tty.windows.length) {
+  // if (!ttyx.windows.length) {
   //   document.title = initialTitle;
   //   if (h1) h1.innerHTML = initialTitle;
   // }
@@ -714,7 +736,7 @@ Tab.prototype.destroy = function() {
   if (this.destroyed) return;
   this.socket.emit('kill', this.id);
   this._destroy();
-  tty.emit('close tab', this);
+  ttyx.emit('close tab', this);
   this.emit('close');
 };
 
@@ -738,17 +760,17 @@ Tab.prototype.hookKeys = function() {
       return;
     }
 
-    i = indexOf(tty.windows, this.window) + offset;
+    i = indexOf(ttyx.windows, this.window) + offset;
 
     this._ignoreNext();
 
-    if (tty.windows[i]) return tty.windows[i].highlight();
+    if (ttyx.windows[i]) return ttyx.windows[i].highlight();
 
     if (offset > 0) {
-      if (tty.windows[0]) return tty.windows[0].highlight();
+      if (ttyx.windows[0]) return ttyx.windows[0].highlight();
     } else {
-      i = tty.windows.length - 1;
-      if (tty.windows[i]) return tty.windows[i].highlight();
+      i = ttyx.windows.length - 1;
+      if (ttyx.windows[i]) return ttyx.windows[i].highlight();
     }
 
     return this.window.highlight();
@@ -896,7 +918,7 @@ function load() {
 
   off(document, 'load', load);
   off(document, 'DOMContentLoaded', load);
-  tty.open();
+  ttyx.open();
 }
 
 on(document, 'load', load);
@@ -907,11 +929,11 @@ setTimeout(load, 200);
  * Expose
  */
 
-tty.Window = Window;
-tty.Tab = Tab;
-tty.Terminal = Terminal;
+ttyx.Window = Window;
+ttyx.Tab = Tab;
+ttyx.Terminal = Terminal;
 
-this.tty = tty;
+this.ttyx = ttyx;
 
 }).call(function() {
   return this || (typeof window !== 'undefined' ? window : global);

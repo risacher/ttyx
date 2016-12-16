@@ -1,0 +1,10 @@
+#!/usr/bin/perl
+
+# FIXME: rewrite this in node, to remove dependency on perl
+
+$0 = "login";
+print "Login: ";
+my $username = <STDIN>;
+chomp $username;
+$username =~ s/[^a-z]//g;
+exec ("/usr/bin/ssh -e none $username\@localhost");
