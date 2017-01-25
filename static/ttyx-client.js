@@ -495,13 +495,13 @@ Window.prototype.maximize = function() {
   el.style.top = '0px';
   el.style.width = '100%';
   el.style.height = '100%';
-  term.element.style.width = '100%';
-  term.element.style.height = '100%';
+  term.element.style.width = '99%';
+  term.element.style.height = '99%';
   el.style.boxSizing = 'border-box';
   this.grip.style.display = 'none';
   root.className = 'maximized';
 
-  this.resize(x, y);
+  this.resize(x-1, y-1);
 
   ttyx.emit('maximize window', this);
   this.emit('maximize');
