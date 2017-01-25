@@ -167,7 +167,7 @@ all code is your original work. `</legalese>`
 
 ## License
 
-    Copyright (c) 2016, Dan Risacher (MIT License)
+    Copyright (c) 2016-2017, Dan Risacher (MIT License)
     Copyright (c) 2012-2014, Christopher Jeffrey (MIT License)
 
 [1]: http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking
