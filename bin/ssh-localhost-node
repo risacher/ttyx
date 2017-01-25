@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+"use strict";
+
+const ffi = require('ffi');
+const ref = require('ref');
+const ArrayType = require('ref-array');
+const stringAry = ArrayType('string');
+
+const readline = require("readline");
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+rl.question('Login: ', (username) => {
+    username = username.replace(/[^a-z]/g, "");
+    rl.close();
+    execvp("/usr/bin/ssh", "-e", "none", username+'@localhost');
+});
+
+
+
+function execvp() {
+    var current = ffi.Library(null, 
+                              { execvp: ['int', ['string',
+                                                 stringAry]],
+                                dup2: ['int', ['int', 'int']]});
+    current.dup2(process.stdin._handle.fd, 0);
+    current.dup2(process.stdout._handle.fd, 1);
+    current.dup2(process.stderr._handle.fd, 2);
+    var ret = current.execvp(arguments[0], Array.prototype.slice.call(arguments).concat([ref.NULL]));    
+}
+
