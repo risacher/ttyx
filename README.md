@@ -1,10 +1,13 @@
-# tty.js
+# ttyx
 
-A terminal in your browser using node.js and socket.io. Based on Fabrice
-Bellard's vt100 for [jslinux](http://bellard.org/jslinux/).
+A terminal in your browser using node.js and socket.io. 
+
+Updated from [chjj/tty.js](https://github.com/chjj/tty.js), ttyx replaces [term.js](https://github.com/chjj/term.js) with [xterm.js](https://github.com/sourcelair/xterm.js), updates [socket.io](https://socket.io) to version 1.x and updates [Express](http://expressjs.com/) to version 4.x.
+
+Originally Based on Fabrice Bellard's vt100 for [jslinux](http://bellard.org/jslinux/).
 
 For the standalone web terminal, see
-[**term.js**](https://github.com/chjj/term.js).
+[**xterm.js**](https://github.com/sourcelair/xterm.js).
 
 For the lowlevel terminal spawner, see
 [**pty.js**](https://github.com/chjj/pty.js).
@@ -35,17 +38,17 @@ For the lowlevel terminal spawner, see
 ## Install
 
 ``` bash
-$ npm install tty.js
+$ npm install ttyx # THIS DOES NOT WORK YET
 ```
 
 ## Usage
 
-tty.js is an app, but it's also possible to hook into it programatically.
+ttyx is an app, but it's also possible to hook into it programatically.
 
 ``` js
-var tty = require('tty.js');
+var ttyx = require('ttyx');
 
-var app = tty.createServer({
+var app = ttyx.createServer({
   shell: 'bash',
   users: {
     foo: 'bar'
@@ -62,7 +65,7 @@ app.listen();
 
 ## Configuration
 
-Configuration is stored in `~/.tty.js/config.json` or `~/.tty.js` as a single
+Configuration is stored in `~/.ttyx/config.json` or `~/.ttyx` as a single
 JSON file. An example configuration file looks like:
 
 ``` json
@@ -122,46 +125,39 @@ Usernames and passwords can be plaintext or sha1 hashes.
 
 ### 256 colors
 
-If tty.js fails to check your terminfo properly, you can force your `TERM`
+If ttyx fails to check your terminfo properly, you can force your `TERM`
 to `xterm-256color` by setting `"termName": "xterm-256color"` in your config.
 
 ## Security
 
-tty.js currently has https as an option. It also has express' default basic
+ttyx currently has https as an option. It also has express' default basic
 auth middleware as an option, until it possibly gets something more robust.
 It's ultimately up to you to make sure no one has access to your terminals
 but you.
 
+As an alternative approach (from tty.js), ttyx defaults to running a wrapper 
+called ssh-localhost, that forces a user to login to the server. 
+
 ## CLI
 
-- `tty.js --port 3000` - start and bind to port 3000.
-- `tty.js --daemonize` - daemonize process.
-- `tty.js --config ~/my-config.json` - specify config file.
+- `ttyx-server.js --port 3000` - start and bind to port 3000.
+- `ttyx-server.js --daemonize` - daemonize process.
+- `ttyx-server.js --config ~/my-config.json` - specify config file.
 
 ## TERM
 
-The main goal of tty.js is to eventually write a full xterm emulator.
-This goal has almost been reached, but there are a few control sequences
-not implemented fully. `TERM` should render everything fine when set to
-`xterm`.
+The goal of ttyx is to present a complete, usable application that fuses the 
+excellent work of others: xterm.js, pty.js, socket.io, and Express.
 
 ## Portability
 
-tty.js should ultimately be able to work on any unix that implements unix98
-tty's and `forkpty(3)`. tty.js builds on linux and osx, and it *should* build
+ttyx should ultimately be able to work on any unix that implements unix98
+tty's and `forkpty(3)`. ttyx builds on linux and osx, and it *should* build
 on NetBSD, FreeBSD, and OpenBSD as well. If you have trouble building, please
 post an issue.
 
 ## Todo
 
-The distance to go before full xterm compatibility.
-
-- VT52 codes for compatibility
-- All vt400 rectangle sequences
-- Remaining DEC private modes
-- Miscellaneous sequences: cursor shape, window title
-- Origin Mode, Insert Mode
-- Proper Tab Setting
 
 ## Contribution and License Agreement
 
@@ -171,6 +167,7 @@ all code is your original work. `</legalese>`
 
 ## License
 
-Copyright (c) 2012-2014, Christopher Jeffrey (MIT License)
+    Copyright (c) 2016, Dan Risacher (MIT License)
+    Copyright (c) 2012-2014, Christopher Jeffrey (MIT License)
 
 [1]: http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking
