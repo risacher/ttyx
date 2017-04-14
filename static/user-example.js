@@ -1,8 +1,12 @@
 // This is an example of some things that you can do by placing code in static/user.js
 
 window.onbeforeunload = confirmExit;
-function confirmExit() {
-    return "You have attempted to leave this page. Are you sure?";
+function confirmExit(e) {
+  var dlogText = "You have attempted to leave this page. Are you sure?";
+  // send a C-w here?
+
+  e.returnvalue = dlogText;
+  return dlogText;
 }
 
 
