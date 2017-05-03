@@ -2,7 +2,7 @@
 
 A terminal in your browser using node.js and socket.io. 
 
-Updated from [chjj/tty.js](https://github.com/chjj/tty.js), ttyx replaces [term.js](https://github.com/chjj/term.js) with [xterm.js](https://github.com/sourcelair/xterm.js), updates [socket.io](https://socket.io) to version 1.x and updates [Express](http://expressjs.com/) to version 4.x.
+Updated from [chjj/tty.js](https://github.com/chjj/tty.js), ttyx replaces [term.js](https://github.com/chjj/term.js) with [xterm.js](https://github.com/sourcelair/xterm.js), updates [socket.io](https://socket.io) to version 1.x and updates [Express](http://expressjs.com/) to version 4.x.  Ttyx also improves out-of-the-box security by replacing the default application with a wrapper that forces the user to login.  
 
 Originally Based on Fabrice Bellard's vt100 for [jslinux](http://bellard.org/jslinux/).
 
