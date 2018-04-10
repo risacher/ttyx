@@ -16,6 +16,8 @@ var document = this.document
     , h1
     , open
     , lights;
+
+    Terminal.applyAddon(fit);
     
 /**
  * Initial Document Title
@@ -35,11 +37,27 @@ function cancel(ev) {
   return false;
 }
 
-var EventEmitter = Terminal.EventEmitter
-  , inherits = Terminal.inherits
-  , on = Terminal.on
-  , off = Terminal.off;
+function inherits(child, parent) {
+    function f() {
+        this.constructor = child;
+    }
+    f.prototype = parent.prototype;
+    child.prototype = new f;
+}
 
+function  on(el, type, handler, capture) {
+    if (!Array.isArray(el)) {
+        el = [el];
+    }
+    el.forEach(function (element) {
+        element.addEventListener(type, handler, capture || false);
+    });
+}
+
+function off(el, type, handler, capture) {
+    el.removeEventListener(type, handler, capture || false);
+}
+    
 /**
  * ttyx
  */
@@ -263,8 +281,8 @@ function Window(socket) {
     this.createTab();
     self.focus();
     this.bind();
-    
-    this.tabs[0].once('open', function() {
+    //this use to be 'once' not 'on'
+    this.tabs[0].on('open', function() {
         ttyx.emit('open window', self);
         self.emit('open');
     });
@@ -513,7 +531,7 @@ Window.prototype.resize = function(cols, rows) {
   console.log('resize', cols, rows);
 
   this.each(function(term) {
-//    term.resize(cols, rows);
+    term.resize(cols, rows);
       term.fit();
   });
 
@@ -530,7 +548,7 @@ Window.prototype.each = function(func) {
 
 Window.prototype.createTab = function() {
     var tab =  new Tab(this, this.socket);
-    tab.fit();
+//    tab.fit();
     tab.focus();
     return tab;
 };
@@ -585,6 +603,7 @@ function Tab(win, socket) {
         rows: rows
     });
 
+  
     var button = document.createElement('div');
     button.className = 'tab';
     button.innerHTML = '\u2022';
@@ -609,6 +628,8 @@ function Tab(win, socket) {
     this.hookKeys();
     
     win.tabs.push(this);
+
+    this.setOption('fontFamily', 'Menlo, Consolas, "DejaVu Sans Mono", monospace');
     
     this.socket.emit('create', cols, rows, function(err, data) {
         if (err) return self._destroy();
