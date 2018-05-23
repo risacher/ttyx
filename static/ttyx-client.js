@@ -526,30 +526,30 @@ Window.prototype.maximize = function() {
 };
 
 Window.prototype.resize = function(cols, rows) {
-  this.cols = cols;
-  this.rows = rows;
-  console.log('resize', cols, rows);
-
-  this.each(function(term) {
-    term.resize(cols, rows);
-      term.fit();
-  });
-
-  ttyx.emit('resize window', this, cols, rows);
-  this.emit('resize', cols, rows);
+    this.cols = cols;
+    this.rows = rows;
+    console.log('resize', cols, rows);
+    
+    this.each(function(term) {
+        term.resize(cols, rows);
+        term.fit();
+    });
+    
+    ttyx.emit('resize window', this, cols, rows);
+    this.emit('resize', cols, rows);
 };
-
+    
 Window.prototype.each = function(func) {
-  var i = this.tabs.length;
-  while (i--) {
-    func(this.tabs[i], i);
-  }
+    var i = this.tabs.length;
+    while (i--) {
+        func(this.tabs[i], i);
+    }
 };
-
+    
 Window.prototype.createTab = function() {
     var tab =  new Tab(this, this.socket);
-//    tab.fit();
     tab.focus();
+    tab.fit();  // does this work?
     return tab;
 };
 
