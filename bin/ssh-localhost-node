@@ -13,21 +13,18 @@ const rl = readline.createInterface({
 });
 
 rl.question('Login: ', (username) => {
-    username = username.replace(/[^a-z]/g, "");
-    rl.close();
-    execvp("/usr/bin/ssh", "-e", "none", username+'@localhost');
-});
-
-
-
-function execvp() {
+    username = username.replace(/[^a-z0-9_]/g, "");
     var current = ffi.Library(null, 
                               { execvp: ['int', ['string',
                                                  stringAry]],
                                 dup2: ['int', ['int', 'int']]});
+    rl.close();
     current.dup2(process.stdin._handle.fd, 0);
     current.dup2(process.stdout._handle.fd, 1);
     current.dup2(process.stderr._handle.fd, 2);
-    var ret = current.execvp(arguments[0], Array.prototype.slice.call(arguments).concat([ref.NULL]));    
-}
+    var ret = current.execvp("/usr/bin/ssh", ['ssh', '-e', 'none', 
+                                              username+'@localhost', ref.NULL]);
+});
+
+
 
