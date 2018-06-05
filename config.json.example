@@ -1,10 +1,13 @@
 {
+    "comment": "save this file as ~/.ttyx/config.json",
     "debug": true,
     "port": 3000,
     "hostname": "0.0.0.0",
     "term": {
 	"termName": "xterm-256color",
-	"geometry": [80, 30],
+        "fontSize": 12,
+        "fontFamily": 'Menlo, Consolas, "DejaVu Sans Mono", monospace',
+        "geometry": [80, 30],
 	"scrollback": 1000,
 	"visualBell": false,
 	"popOnBell": false,

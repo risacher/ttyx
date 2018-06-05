@@ -131,7 +131,7 @@ ttyx.open = function() {
     
     ttyx.socket.on('kill', function(id) {
         if (!ttyx.terms[id]) return;
-        ttyx.terms[id]._destroy();
+      //ttyx.terms[id]._destroy();
     });
     
     // XXX Clean this up.
@@ -600,7 +600,9 @@ function Tab(win, socket) {
     
     Terminal.call(this, {
         cols: cols,
-        rows: rows
+        rows: rows,
+        fontSize: Terminal.fontSize,
+        fontFamily: Terminal.fontFamily
     });
 
   
@@ -629,8 +631,6 @@ function Tab(win, socket) {
     
     win.tabs.push(this);
 
-    this.setOption('fontFamily', 'Menlo, Consolas, "DejaVu Sans Mono", monospace');
-    
     this.socket.emit('create', cols, rows, function(err, data) {
         if (err) return self._destroy();
         self.pty = data.pty;
