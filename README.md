@@ -96,6 +96,8 @@ JSON file. An example configuration file looks like:
   "term": {
     "termName": "xterm",
     "geometry": [80, 24],
+    "fontSize": 12,
+    "fontFamily": "Menlo, Consolas, \"DejaVu Sans Mono\", monospace",
     "scrollback": 1000,
     "visualBell": false,
     "popOnBell": false,
