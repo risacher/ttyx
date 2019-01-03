@@ -504,22 +504,24 @@ Window.prototype.maximize = function() {
 
   window.scrollTo(0, 0);
 
-  x = root.clientWidth / term.element.offsetWidth;
-  y = root.clientHeight / term.element.offsetHeight;
-  x = (x * term.cols) | 0;
-  y = (y * term.rows) | 0;
 
   el.style.left = '0px';
   el.style.top = '0px';
-  el.style.width = '100%';
-  el.style.height = '100%';
+  el.style.width = '99%';
+  el.style.height = '99%';
   term.element.style.width = '99%';
   term.element.style.height = '99%';
   el.style.boxSizing = 'border-box';
   this.grip.style.display = 'none';
   root.className = 'maximized';
 
-  this.resize(x-1, y-1);
+  x = root.clientWidth / term.element.offsetWidth;
+  y = root.clientHeight / term.element.offsetHeight;
+  x = (x * term.cols) | 0;
+  y = (y * term.rows) | 0;
+
+  // the -3 is purely by experiment
+  this.resize(x, y);
 
   ttyx.emit('maximize window', this);
   this.emit('maximize');
