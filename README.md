@@ -50,7 +50,7 @@ ttyx is an app, but it's also possible to hook into it programatically.
 ``` js
 var ttyx = require('ttyx');
 
-var app = ttyx.createServer({
+var app = ttyx.Server({
   shell: 'bash',
   users: {
     foo: 'bar'
