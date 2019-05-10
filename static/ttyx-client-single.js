@@ -1,5 +1,5 @@
 /**
- * ttyx-client.js, Copyright (C) 2016, Dan Risacher (MIT License)
+ * ttyx-client-single.js, Copyright (C) 2016-2019, Dan Risacher (MIT License)
  * based on tty.js, Copyright (c) 2012-2013, Christopher Jeffrey (MIT License)
  */
 
@@ -71,6 +71,7 @@ var ttyx = new EventEmitter;
 ttyx.socket;
 ttyx.terms;
 ttyx.elements;
+ttyx.sid = Math.random().toString(36).replace(/[^a-z]+/g, '')
 
 /**
  * Open
@@ -82,7 +83,8 @@ ttyx.elements;
       , base = parts.slice(0, parts.length - 1).join('/') + '/'
       , resource = base + 'socket.io';
       //FIXME - remove server name 
-      ttyx.socket = io.connect(window.location.origin, { path: resource });
+      ttyx.socket = io.connect(window.location.origin, { path: resource,
+                                                         query: { tid: ttyx.sid} });
     } else {
       ttyx.socket = io.connect();
     }
@@ -103,35 +105,37 @@ ttyx.elements;
     
     ttyx.socket.on('connect', function() {
       console.log('tty connect');
-      ttyx.reset();
+      //ttyx.reset();
       ttyx.emit('connect');
       status('connected');
-      var term = ttyx.term = new Terminal();
-      tc.innerHTML = "";
-      term.open(tc);
-      term.fit();
-      term.focus();
+      if (! ttyx.term)  { 
+        var term = ttyx.term = new Terminal();
+        tc.innerHTML = "";
+        term.open(tc);
+        term.fit();
+        term.focus();
 //      ttyx.term.write("foo");
 
-      term.on('resize', function (x) {
-        ttyx.socket.emit('resize', this.id, x.cols, x.rows);
-        console.log('resize: ', x);
-        status('resize: ', x);
-      });
-      
-      let self = ttyx.term;
-      ttyx.socket.emit('create', self.cols, self.rows, function(err, data) {
-        if (err) return self._destroy();
-        self.pty = data.pty;
-        self.id = data.id;
-        ttyx.terms[self.id] = self;
-        //self.setProcessName(data.process);
-        self.on('data', function(data) {
-          ttyx.socket.emit('data', self.id, data);
+        term.on('resize', function (x) {
+          ttyx.socket.emit('resize', this.id, x.cols, x.rows);
+          console.log('resize: ', x);
+          status('resize: ', x);
         });
-        ttyx.emit('open tab', self);
-        self.emit('open');
-      });
+        
+        let self = ttyx.term;
+        ttyx.socket.emit('create', self.cols, self.rows, function(err, data) {
+          if (err) return self._destroy();
+          self.pty = data.pty;
+          self.id = data.id;
+          ttyx.terms[self.id] = self;
+          //self.setProcessName(data.process);
+          self.on('data', function(data) {
+            ttyx.socket.emit('data', self.id, data);
+          });
+          ttyx.emit('open tab', self);
+          self.emit('open');
+        });
+      }
     });
     
     ttyx.socket.on('data', function(id, data) {
@@ -151,7 +155,7 @@ ttyx.elements;
     // XXX Clean this up.
     ttyx.socket.on('sync', function(terms) {
       console.log('Attempting to sync...');
-      console.log(term);
+      console.log(terms);
       status('sync: ', terms);
 
       // there was code here once - ressurect if needed.
@@ -173,10 +177,14 @@ ttyx.elements;
 };
 
   function status (msg, obj) {
-    document.getElementById('status').innerText = msg
-      + (obj?JSON.stringify(obj):'')
-      + " (" + window.ttyx.socket.io.engine.transports.join(', ') + ")";
-    ;
+    var status = document.getElementById('status');
+    
+    if (status) {
+      status.innerText = msg
+        + (obj?JSON.stringify(obj):'')
+        + " (" + window.ttyx.socket.io.engine.transports.join(', ') + ")";
+      status.setAttribute('title', status.getAttribute('title')+msg+"\n");
+    }
   }
                    
 /**

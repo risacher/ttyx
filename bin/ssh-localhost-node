@@ -1,4 +1,5 @@
 #!/usr/bin/node
+
 "use strict";
 
 const ffi = require('ffi');
@@ -25,9 +26,13 @@ function execvp() {
                               { execvp: ['int', ['string',
                                                  stringAry]],
                                 dup2: ['int', ['int', 'int']]});
+    rl.close();
     current.dup2(process.stdin._handle.fd, 0);
     current.dup2(process.stdout._handle.fd, 1);
     current.dup2(process.stderr._handle.fd, 2);
-    var ret = current.execvp(arguments[0], Array.prototype.slice.call(arguments).concat([ref.NULL]));    
-}
+    var ret = current.execvp("/usr/bin/ssh", ['ssh', '-e', 'none', 
+                                              username+'@localhost', ref.NULL]);
+});
+
+
 

@@ -1,5 +1,5 @@
 /**
- * ttyx-client.js, Copyright (C) 2016, Dan Risacher (MIT License)
+ * ttyx-client.js, Copyright (C) 2016-2019, Dan Risacher (MIT License)
  * based on tty.js, Copyright (c) 2012-2013, Christopher Jeffrey (MIT License)
  */
 
@@ -72,7 +72,8 @@
   ttyx.windows;
   ttyx.terms;
   ttyx.elements;
-  
+  ttyx.sid = Math.random().toString(36).replace(/[^a-z]+/g, '')
+
   /**
    * Open
    */
@@ -82,8 +83,10 @@
       var parts = document.location.pathname.split('/')
       , base = parts.slice(0, parts.length - 1).join('/') + '/'
       , resource = base + 'socket.io';
-      //FIXME - remove server name 
-      ttyx.socket = io.connect(window.location.origin, { path: resource });
+      //FIXME - remove server name
+      // do not call the sid 'sid', because socket.io uses that internally.
+      ttyx.socket = io.connect(window.location.origin, { path: resource,
+                                                         query: { tid: ttyx.sid } });
     } else {
       ttyx.socket = io.connect();
     }
@@ -118,19 +121,39 @@
     }
     
     ttyx.socket.on('connect', function() {
-      console.log('tty connect');
-      ttyx.reset();
+      console.log('socket connect', this.id, ttyx.sid);
+      // session id now passed in the handshake.
+      //ttyx.socket.emit('session', ttyx.sid, this.id);
+      //ttyx.reset(); 
       ttyx.emit('connect');
     });
     
+    ttyx.socket.on('disconnect', function(reason) {
+      console.log('socket disconnect', reason);
+      ttyx.emit('disconnect');
+    });
+    
+    ttyx.socket.on('reconnect', function(number) {
+      console.log('socket reconnect', number, this.id, ttyx.sid);
+      //this.emit('sync', ttyx.terms);
+      ttyx.emit('reconnect');
+      console.log('exit reconnect');
+    });
+    
+    ttyx.socket.on('reconnect_attempt', function(num) {
+      console.log('socket reconnect attempt ', num);
+      ttyx.emit('reconnect_connect');
+    });
+    
     ttyx.socket.on('data', function(id, data) {
-      //    console.log('tty data for term ', id);
+      //console.log('tty data for term ', id, " ", data);
       if (!ttyx.terms[id]) return;
       ttyx.terms[id].write(data);
     });
     
     // given that socket.io v2 can reconnect, maybe I should take this out?
     ttyx.socket.on('kill', function(id) {
+      console.log('kill', id);
       if (!ttyx.terms[id]) return;
       ttyx.terms[id]._destroy();
     });
@@ -138,10 +161,22 @@
     // XXX Clean this up.
     ttyx.socket.on('sync', function(terms) {
       console.log('Attempting to sync...');
-      console.log(terms);
+      console.log('terms', terms);
+
+      // The original code below destroyed all the windows and
+      // recreated them with data about the current terminals from the
+      // server.  This didn't make sense - the server has no
+      // information about the placement of tabs or windows, and that
+      // issue was ignored.  The simpler thing to do is just do
+      // nothing... if the session reconnects successfully, then the
+      // open terms/tabs/windows are fine.  If we can't reconnect the
+      // session, then it's all pointless anyway.
+
+      // in the future, if this approach works, delete all the 'sync'
+      // code from client and server.
       
-      ttyx.reset();
-      
+      //ttyx.reset();
+      if (0) {
       var emit = ttyx.socket.emit;
       ttyx.socket.emit = function() {};
       
@@ -161,7 +196,11 @@
       });
       
       ttyx.socket.emit = emit;
+      console.log("end sync");
+      }
     });
+    
+                   
     
     // We would need to poll the os on the serverside
     // anyway. there's really no clean way to do this.
@@ -283,7 +322,7 @@
     self.focus();
     this.bind();
     //this use to be 'once' not 'on'
-    this.tabs[0].term.on('open', function() {
+    this.tabs[0].on('open', function() {
       ttyx.emit('open window', self);
       self.emit('open');
     });
@@ -472,7 +511,7 @@
     
     var self = this
     , el = this.element
-    , term = this.focused.term
+    , term = this.focused
     , x
     , y;
     
@@ -533,7 +572,7 @@
     
     this.each(function(tab) {
       tab.resize(cols, rows);
-      tab.term.fit();
+      tab.fit();
     });
     
     ttyx.emit('resize window', this, cols, rows);
@@ -550,7 +589,7 @@
   Window.prototype.createTab = function() {
     var tab =  new Tab(this, this.socket);
     tab.focus();
-    tab.term.fit();  // does this work?
+    tab.fit();  // does this work?
     return tab;
   };
   
@@ -599,14 +638,12 @@
     var cols = win.cols
     , rows = win.rows;
     
-    // Terminal.call(this, {
-    //     cols: cols,
-    //     rows: rows
-    // });
-    
-    var term = new Terminal({
-      cols: cols,
-      rows: rows
+    Terminal.call(this, {
+        rendererType: 'dom',
+        cols: cols,
+        rows: rows,
+        fontSize: Terminal.fontSize,
+        fontFamily: Terminal.fontFamily
     });
     
     var button = document.createElement('div');
@@ -629,14 +666,14 @@
     this.button = button;
     this.element = null;
     this.process = '';
-    term.open(win.tc);
-    this.term = term;
+    //this.term = term; // Commit to Tab inherits Terminal
+    this.open(win.tc);
     this.hookKeys();
+    this.on('data', (data) => { this.socket.emit('data', this.id, data); });
+    this.on('title', (title) => { this._handleTitle(title); }); 
     
     win.tabs.push(this);
-    
-    term.setOption('fontFamily', 'Menlo, Consolas, "DejaVu Sans Mono", monospace');
-    
+
     this.socket.emit('create', cols, rows, function(err, data) {
       if (err) return self._destroy();
       self.pty = data.pty;
@@ -644,21 +681,13 @@
       ttyx.terms[self.id] = self;
       self.setProcessName(data.process);
       ttyx.emit('open tab', self);
-      self.term.emit('open');
+      self.emit('open');
     });
   };
   
   inherits(Tab, Terminal);
   
-  // We could just hook in `tab.on('data', ...)`
-  // in the constructor, but this is faster.
-  Tab.prototype.handler = function(data) {
-    this.socket.emit('data', this.id, data);
-  };
-  
-  // We could just hook in `tab.on('title', ...)`
-  // in the constructor, but this is faster.
-  Tab.prototype.handleTitle = function(title) {
+  Tab.prototype._handleTitle = function(title) {
     if (!title) return;
     
     title = sanitize(title);
@@ -675,11 +704,11 @@
     }
   };
   
-  //Tab.prototype._write = Tab.prototype.write;
+  Tab.prototype._write = Tab.prototype.write;
   
   Tab.prototype.write = function(data) {
     if (this.window.focused !== this) this.button.style.color = 'red';
-    return this.term.write(data);
+    return this._write(data);
   };
   
   Tab.prototype._focus = Tab.prototype.focus;
@@ -699,7 +728,7 @@
         win.focused.button.style.fontWeight = '';
       }
       
-      win.tc.appendChild(this.term.element);
+      win.tc.appendChild(this.element);
       win.focused = this;
       
       win.title.innerHTML = this.process;
@@ -708,23 +737,23 @@
       this.button.style.color = '';
     }
     
-    this.handleTitle(this.title);
+    this._handleTitle(this.title);
     
     this._focus();
     
     //  win.focus();
     
     ttyx.emit('focus tab', this);
-    this.term.emit('focus');
+    this.emit('focus');
   };
   
-  //Tab.prototype._resize = Tab.prototype.resize;
+  Tab.prototype._resize = Tab.prototype.resize;
   
   Tab.prototype.resize = function(cols, rows) {
     this.socket.emit('resize', this.id, cols, rows);
-    this.term.resize(cols, rows);
+    this._resize(cols, rows);
     ttyx.emit('resize tab', this, cols, rows);
-    this.term.emit('resize', cols, rows);
+    this.emit('resize', cols, rows);
   };
   
   Tab.prototype.__destroy = Tab.prototype.destroy;
@@ -736,8 +765,8 @@
     var win = this.window;
     
     this.button.parentNode.removeChild(this.button);
-    if (this.term.element.parentNode) {
-      this.term.element.parentNode.removeChild(this.term.element);
+    if (this.element.parentNode) {
+      this.element.parentNode.removeChild(this.element);
     }
     
     if (ttyx.terms[this.id]) delete ttyx.terms[this.id];
@@ -761,17 +790,19 @@
   
   Tab.prototype.destroy = function() {
     if (this.destroyed) return;
+    console.log("emiting kill from within Tab.destroy");
     this.socket.emit('kill', this.id);
     this._destroy();
     ttyx.emit('close tab', this);
-    this.term.emit('close');
+    this.emit('close');
   };
   
   Tab.prototype.hookKeys = function() {
     var self = this;
     
     // Alt-[jk] to quickly swap between windows.
-    this.term.on('key', function(key, ev) {
+    this.on('key', function(key, ev) {
+      // console.log('key event: ', key);
       if (Terminal.focusKeys === false) {
         return;
       }
@@ -788,8 +819,8 @@
       }
       
       i = indexOf(ttyx.windows, this.window) + offset;
-      
-      this.term._ignoreNext();
+
+      self._ignoreNext();
       
       if (ttyx.windows[i]) return ttyx.windows[i].highlight();
       
@@ -803,28 +834,28 @@
       return this.window.highlight();
     });
     
-    this.term.on('request paste', function(key) {
+    this.on('request paste', function(key) {
       this.socket.emit('request paste', function(err, text) {
         if (err) return;
         self.send(text);
       });
     });
     
-    this.term.on('request create', function() {
+    this.on('request create', function() {
       this.window.createTab();
     });
     
-    this.term.on('request term', function(key) {
+    this.on('request term', function(key) {
       if (this.window.tabs[key]) {
         this.window.tabs[key].focus();
       }
     });
     
-    this.term.on('request term next', function(key) {
+    this.on('request term next', function(key) {
       this.window.nextTab();
     });
     
-    this.term.on('request term previous', function(key) {
+    this.on('request term previous', function(key) {
       this.window.previousTab();
     });
   };
@@ -899,7 +930,7 @@
     name = sanitize(name);
     
     if (this.process !== name) {
-      this.term.emit('process', name);
+      this.emit('process', name);
     }
     
     this.process = name;
