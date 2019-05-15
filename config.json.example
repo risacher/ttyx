@@ -2,6 +2,8 @@
     "comment": "save this file as ~/.ttyx/config.json",
     "debug": true,
     "port": 3000,
+    "sessionTimeout": 600000,
+    "syncSession": true,
     "hostname": "0.0.0.0",
     "term": {
 	"termName": "xterm-256color",
