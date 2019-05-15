@@ -207,7 +207,7 @@
     // This is just easier to do on the
     // clientside, rather than poll on the
     // server, and *then* send it to the client.
-    setInterval(function() {
+    this.pollInterval = setInterval(function() {
       var i = ttyx.windows.length;
       while (i--) {
         if (!ttyx.windows[i].focused) continue;
@@ -688,8 +688,8 @@
   inherits(Tab, Terminal);
   
   Tab.prototype._handleTitle = function(title) {
+
     if (!title) return;
-    
     title = sanitize(title);
     this.title = title;
     
@@ -937,9 +937,9 @@
     this.button.title = name;
     
     if (this.window.focused === this) {
-      // if (this.title) {
-      //   name += ' (' + this.title + ')';
-      // }
+       if (this.title) {
+         name += ' (' + this.title + ')';
+       }
       this.window.title.innerHTML = name;
     }
   };
