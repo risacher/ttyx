@@ -72,7 +72,7 @@ ttyx.socket;
 ttyx.terms;
 ttyx.elements;
 ttyx.sid = Math.random().toString(36).replace(/[^a-z]+/g, '')
-
+  
 /**
  * Open
  */
@@ -117,8 +117,7 @@ ttyx.sid = Math.random().toString(36).replace(/[^a-z]+/g, '')
 //      ttyx.term.write("foo");
 
         term.on('resize', function (x) {
-          ttyx.socket.emit('resize', this.id, x.cols, x.rows);
-          console.log('resize: ', x);
+          ttyx.socket.emit('resize', ttyx.term.id, x.cols, x.rows);
           status('resize: ', x);
         });
         
@@ -168,7 +167,6 @@ ttyx.sid = Math.random().toString(36).replace(/[^a-z]+/g, '')
     on(window, 'resize', function() {
       if (ttyx.term) {
         ttyx.term.fit();
-        
       }
     });
     
