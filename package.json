@@ -37,7 +37,7 @@
     "ref-array": ">= 1.2.0",
     "ref-struct": "^1.1.0",
     "socket.io": "^2.2.0",
-    "xterm": "^3.10.0"
+    "xterm": "^3.14.2"
   },
   "engines": {
     "node": ">= 0.8.0"
