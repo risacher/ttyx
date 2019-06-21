@@ -4,7 +4,7 @@ A terminal in your browser using node.js and socket.io.
 
 [LIVE DEMO](https://risacher.org/zork/) (currently working as-of 2019-06-21)
 
-Updated from [chjj/tty.js](https://github.com/chjj/tty.js), ttyx replaces [term.js](https://github.com/chjj/term.js) with [xterm.js](https://github.com/sourcelair/xterm.js), updates [socket.io](https://socket.io) to version 2.x and updates [Express](http://expressjs.com/) to version 4.x.  Ttyx also improves out-of-the-box security by replacing the default application with a wrapper that forces the user to login.  
+An updated fork of [chjj/tty.js](https://github.com/chjj/tty.js), ttyx replaces [term.js](https://github.com/chjj/term.js) with [xterm.js](https://github.com/sourcelair/xterm.js), updates [socket.io](https://socket.io) to version 2.x and updates [Express](http://expressjs.com/) to version 4.x.  Ttyx also improves out-of-the-box security by replacing the default application with a wrapper that forces the user to login.  
 
 Originally Based on Fabrice Bellard's vt100 for [jslinux](http://bellard.org/jslinux/).
 
@@ -171,7 +171,7 @@ all code is your original work. `</legalese>`
 
 ## License
 
-    Copyright (c) 2016-2017, Dan Risacher (MIT License)
+    Copyright (c) 2016-2019, Dan Risacher (MIT License)
     Copyright (c) 2012-2014, Christopher Jeffrey (MIT License)
 
 [1]: http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking
