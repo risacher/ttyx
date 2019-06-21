@@ -2,14 +2,14 @@
 
 A terminal in your browser using node.js and socket.io. 
 
-[LIVE DEMO](https://risacher.org/zork/) (currently broken as-of 2019-01-24)
+[LIVE DEMO](https://risacher.org/zork/) (currently working as-of 2019-06-21)
 
-Updated from [chjj/tty.js](https://github.com/chjj/tty.js), ttyx replaces [term.js](https://github.com/chjj/term.js) with [xterm.js](https://github.com/sourcelair/xterm.js), updates [socket.io](https://socket.io) to version 1.x and updates [Express](http://expressjs.com/) to version 4.x.  Ttyx also improves out-of-the-box security by replacing the default application with a wrapper that forces the user to login.  
+Updated from [chjj/tty.js](https://github.com/chjj/tty.js), ttyx replaces [term.js](https://github.com/chjj/term.js) with [xterm.js](https://github.com/sourcelair/xterm.js), updates [socket.io](https://socket.io) to version 2.x and updates [Express](http://expressjs.com/) to version 4.x.  Ttyx also improves out-of-the-box security by replacing the default application with a wrapper that forces the user to login.  
 
 Originally Based on Fabrice Bellard's vt100 for [jslinux](http://bellard.org/jslinux/).
 
 For the standalone web terminal, see
-[**xterm.js**](https://github.com/sourcelair/xterm.js).
+[**xterm.js**](https://github.com/xtermjs/xterm.js).
 
 For the lowlevel terminal spawner, see
 [**pty.js**](https://github.com/chjj/pty.js).
