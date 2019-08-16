@@ -1,0 +1,6 @@
+#!/bin/bash
+echo -n "Login: "
+read username
+sanitized_username="${username//[^A-Za-z0-9]/}"
+exec /usr/bin/ssh -e none ${sanitized_username}@localhost
+
