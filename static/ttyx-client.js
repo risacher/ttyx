@@ -551,15 +551,15 @@
     
     el.style.left = '0px';
     el.style.top = '0px';
-    el.style.width = '100%';
-    el.style.height = '100%';
-    term.element.style.width = '99%';
-    term.element.style.height = '99%';
+    el.style.width = (root.clientWidth-6)+'px';
+    el.style.height = (root.clientHeight)+'px';
+    term.element.style.width = '100%';
+    term.element.style.height = '100%';
     el.style.boxSizing = 'border-box';
     this.grip.style.display = 'none';
     root.className = 'maximized';
     
-    this.resize(x-1, y-1);
+    this.resize(x-2, y-2);
     
     ttyx.emit('maximize window', this);
     this.emit('maximize');
