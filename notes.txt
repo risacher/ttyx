@@ -1,0 +1,41 @@
+2020-11-05
+
+wouldn't start on grackle because the default geometry wasn't set in
+~/.ttyx/config.json
+
+Should set the default for that somewhere in the code.
+
+2019-06-21
+
+Mucked with the code to compute size on maximize() in main client to
+avoid pesky scrollbars on the overall page from covering the maximized
+window.
+
+Reverted to canvas renderType (or whatever is the default) which seems
+to work ATM.  (updated xterm.js recently, so maybe that's okay.)
+
+Terminal is underlining things when it shouldn't be.
+
+
+2019-05-07
+
+Reconnect does not work properly with socket.io v2 (if it ever did.)
+I attempted to add some debug code on risacher.org, to at least log to
+console when a reconnect attempt is happening.  But there's nothing in
+the server-side code that reconnects a client to the terminal?  Maybe
+this happens by magic? i.e. if the client reconnects and tries to sync
+to existing terminals.
+
+(Actually, it's in the sync() code.)
+
+And the client-side code reconnects, but it destroys all the terminals
+when it does.  (fixed?)
+
+I don't like the fact that the term Ids are apparently the pty
+filenames.  That seems like a security problem...  if I connect to
+ttyx, and manually change the term id, can I hijack a terminal?  I
+think the terms IDs should be opaque. [FIXED!]
+
+
+
+

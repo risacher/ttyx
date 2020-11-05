@@ -548,18 +548,20 @@
     y = root.clientHeight / term.element.offsetHeight;
     x = (x * term.cols) | 0;
     y = (y * term.rows) | 0;
+
+
     
     el.style.left = '0px';
     el.style.top = '0px';
-    el.style.width = '100%';
-    el.style.height = '100%';
-    term.element.style.width = '99%';
-    term.element.style.height = '99%';
+    el.style.width = (root.clientWidth-6)+'px';
+    el.style.height = (root.clientHeight)+'px';
+    term.element.style.width = '100%';
+    term.element.style.height = '100%';
     el.style.boxSizing = 'border-box';
     this.grip.style.display = 'none';
     root.className = 'maximized';
     
-    this.resize(x-1, y-1);
+    this.resize(x-1, y-1); //this resizes the actual termianl
     
     ttyx.emit('maximize window', this);
     this.emit('maximize');
@@ -639,11 +641,13 @@
     , rows = win.rows;
     
     Terminal.call(this, {
-        rendererType: 'dom',
-        cols: cols,
-        rows: rows,
-        fontSize: Terminal.fontSize,
-        fontFamily: Terminal.fontFamily
+      // 2019-06-21 unclear when do I need 'dom'
+      // Chrome-on-win10  and firefox-on-win10 seems okay
+      rendererType: 'dom',
+      cols: cols,
+      rows: rows,
+      fontSize: Terminal.fontSize,
+      fontFamily: Terminal.fontFamily
     });
     
     var button = document.createElement('div');
