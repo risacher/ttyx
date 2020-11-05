@@ -42,6 +42,13 @@ For the lowlevel terminal spawner, see
 ``` bash
 $ npm install ttyx # THIS DOES NOT WORK YET
 ```
+Note: The default application that ttyx runs for each terminal is a script called ssh-localhost.  This script prompts for a username, sanitizes it to be purely alphanumeric, and then exec's ```ssh -e none ${sanitized_username}@localhost```.  It does this because in some current Linux distributions (e.g. Ubuntu), it is not possible to run /bin/login without root permissions.  The down side of this approach is that to be useful, sshd must be configured to allow password authentication, which by-default on modern Linux, it is not.   
+
+In /etc/ssh/sshd_config, on the server, change appropriate line to: 
+```
+PasswordAuthentication yes
+```
+Alternatively, it probably works to set /bin/login to be suid root, and then change the ttyx config to set ```"shell": "/bin/login",```  I assume that Ubuntu does this for good security reasons. 
 
 ## Usage
 
@@ -139,7 +146,7 @@ auth middleware as an option, until it possibly gets something more robust.
 It's ultimately up to you to make sure no one has access to your terminals
 but you.
 
-As an alternative approach (from tty.js), ttyx defaults to running a wrapper 
+Compared to the original tty.js approach, ttyx defaults to running a wrapper 
 called ssh-localhost, that forces a user to login to the server. 
 
 ## CLI
