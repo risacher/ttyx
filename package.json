@@ -1,7 +1,7 @@
 {
   "name": "ttyx",
   "version": "0.1.0",
-  "description": "replacement for tty.js",
+  "description": "a terminal for the browser (replaces tty.js)",
   "main": "index.js",
   "repository": "git://github.com/risacher/ttyx.git",
   "homepage": "https://github.com/risacher/ttyx",
@@ -32,7 +32,7 @@
     "express": ">= 4.16.3",
     "express-favicon": "^2.0.0",
     "node-pty": "^0.10.1",
-    "socket.io": "^2.2.0",
+    "socket.io": "^4.5.1",
     "xterm": "^3.14.5"
   },
   "engines": {
