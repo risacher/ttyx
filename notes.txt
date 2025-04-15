@@ -1,3 +1,9 @@
+2023-01-06
+It would be nice if the screen code worked again.
+
+Also catching control keys is not working in Firefox and Edge, at least for C-s, also C-e, C-d
+
+
 2020-11-05
 
 wouldn't start on grackle because the default geometry wasn't set in

@@ -1,5 +1,5 @@
 /**
- * ttyx-client.js, Copyright (C) 2016-2019, Dan Risacher (MIT License)
+ * ttyx-client.js, Copyright (C) 2016-2025, Dan Risacher (MIT License)
  * based on tty.js, Copyright (c) 2012-2013, Christopher Jeffrey (MIT License)
  */
 
@@ -17,8 +17,12 @@
   , open
   , lights;
   
-  Terminal.applyAddon(fit);
-  
+//  Terminal.applyAddon(fit);
+//  Terminal.loadAddon(fitAddon);
+
+  const fitAddon = new FitAddon.FitAddon(); // available globally
+
+
   /**
    * Initial Document Title
    */
@@ -588,6 +592,7 @@
   
   Window.prototype.createTab = function() {
     var tab =  new Tab(this, this.socket);
+    tab.loadAddon(fitAddon);
     tab.focus();
     tab.fit();  // does this work?
     return tab;
